@@ -1,0 +1,3 @@
+The SDK or CLI on the instance retrieves the security credentials provided by the role from the instance metadata item iam/security-credentials/[role-name]. The SDK/CLI is granted the permissions for the actions and resources that the role have defined through the security credentials associated with the role. 
+These security credentials are temporary and aws rotates them automatically. 
+New credentials available at least five minutes before the expiration of the old credentials.
