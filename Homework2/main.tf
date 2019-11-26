@@ -30,7 +30,7 @@ resource "aws_nat_gateway" "ngw" {
 
 resource "aws_subnet" "public1" {
     vpc_id = "${aws_vpc.mainvpc.id}"
-    cidr_block = "${var.public_subnet_cidr}"
+    cidr_block = "${var.public_subnet_cidr1}"
     availability_zone = "us-east-1a"
 
     tags = {
@@ -73,7 +73,7 @@ resource "aws_route_table_association" "pub2" {
 resource "aws_subnet" "private1" {
     vpc_id = "${aws_vpc.mainvpc.id}"
 
-    cidr_block = "${var.private_subnet_cidr}"
+    cidr_block = "${var.private_subnet_cidr1}"
     availability_zone = "us-east-1a"
 
     tags = {
@@ -96,7 +96,7 @@ resource "aws_route_table" "private-rt" {
     vpc_id = "${aws_vpc.mainvpc.id}"
 
     route {
-        cidr_block = "0.0.0.0/0"
+        cidr_block = "0.0.0.0/16"
         nat_gateway_id = "${aws_nat_gateway.ngw.id}"
     }
 
@@ -131,6 +131,27 @@ resource "aws_security_group" "HW-sg" {
    protocol    = "tcp"
    cidr_blocks = ["0.0.0.0/0"]
  }
+
+  ingress {
+   from_port = 443
+   to_port = 443
+   protocol = "tcp"
+   cidr_blocks = ["0.0.0.0/0"]
+ }
+  
+  ingress {
+   from_port   = 22
+   to_port     = 22
+   protocol    = "tcp"
+   cidr_blocks = ["0.0.0.0/0"]
+ }
+
+  egress {
+   from_port   = 0
+   to_port     = 0
+   protocol    = "-1"
+   cidr_blocks = ["0.0.0.0/0"]
+ }
 }
 
 data "aws_ami" "ubuntu" {
@@ -149,7 +170,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-resource "aws_instance" "server" {
+resource "aws_instance" "server1" {
   count = 1
 
   ami           = data.aws_ami.ubuntu.id
@@ -165,24 +186,51 @@ resource "aws_instance" "server" {
   }
 }
 
-resource "aws_db_subnet_group" "db-group" {
-  name       = "hw-db-subnets"
-  subnet_id = ["${aws_subnet.private2.id}", "${aws_subnet.private1.id}"]
+resource "aws_instance" "server2" {
+  count = 1
+
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+
+  associate_public_ip_address = true
+  subnet_id = "${aws_subnet.public2.id}"
+  vpc_security_group_ids = [aws_security_group.HW-sg.id]
+  key_name               = aws_key_pair.server_key.key_name
+
   tags = {
-    Name = "My DB subnet group"
+    Name = "Server2"
   }
 }
 
-resource "aws_db_instance" "db-server" {
-  allocated_storage = 10
-  storage_type = "gp2"
-  engine = "mysql"
-  engine_version = "5.7.22"
-  instance_class  = "db.t2.micro"
-  skip_final_snapshot = "true"
-  name = "database1"
-  username = "adminuser"
-  password = "adminpass"
-  db_subnet_group_name = "hw-db-subnets"
+resource "aws_instance" "database1" {
+  count = 1
+
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+
+  associate_public_ip_address = false
+  subnet_id = "${aws_subnet.private1.id}"
+  vpc_security_group_ids = [aws_security_group.HW-sg.id]
+  key_name               = aws_key_pair.server_key.key_name
+
+  tags = {
+    Name = "Database1"
+  }
+}
+
+resource "aws_instance" "database2" {
+  count = 1
+
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+
+  associate_public_ip_address = false
+  subnet_id = "${aws_subnet.private2.id}"
+  vpc_security_group_ids = [aws_security_group.HW-sg.id]
+  key_name               = aws_key_pair.server_key.key_name
+
+  tags = {
+    Name = "Database2"
+  }
 }
 
