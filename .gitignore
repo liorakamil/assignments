@@ -31,3 +31,5 @@ override.tf.json
 # example: *tfplan*
 .DS_Store
 *.pem
+
+.idea
