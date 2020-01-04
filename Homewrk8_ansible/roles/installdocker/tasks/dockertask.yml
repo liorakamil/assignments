@@ -1,0 +1,5 @@
+---
+- name: installif 
+  tasks: 
+   - include: tasks/dockertask.yml
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Red Hat Enterprise Linux"

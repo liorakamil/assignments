@@ -1,0 +1,10 @@
+---
+
+- name: Nodes
+  hosts: "all"
+  become: true
+
+  roles:
+    - role: "installdocker"
+      tags: ["docker"]
+      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Red Hat Enterprise Linux"
